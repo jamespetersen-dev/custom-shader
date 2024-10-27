@@ -3,6 +3,8 @@ Shader "Custom/Obsidian"
     Properties
     {
         _MainTex ("Albedo", 2D) = "white" {}
+        _NormalMap("Normal Map", 2D) = "white" {}
+        _NormalScale("Normal Scale", Float) = 1
         _Tint("Color Tint", Color) = (1, 1, 1, 1)
         [Gamma] _Metallic("Metallic", Range(0, 1)) = 0
         _Smoothness("Smoothness", Range(0, 1)) = 0.1
@@ -20,9 +22,9 @@ Shader "Custom/Obsidian"
             #include "UnityStandardBRDF.cginc"
             #include "UnityLightingCommon.cginc"
 
-            sampler2D _MainTex;
+            sampler2D _MainTex, _NormalMap;
             float4 _Tint;
-            float _Metallic, _Smoothness;
+            float _Metallic, _Smoothness, _NormalScale;
 
             struct appdata {
                 float4 vertex : POSITION;
@@ -46,7 +48,11 @@ Shader "Custom/Obsidian"
             }
 
             float4 frag(v2f i) : SV_Target {
-                i.normal = normalize(i.normal);
+                i.normal.xy = tex2D(_NormalMap, i.uv).wy * 2 - 1;
+                i.normal.xy *= _NormalScale;
+	            i.normal.z = sqrt(1 - saturate(dot(i.normal.xy, i.normal.xy)));
+	            i.normal = i.normal.xzy;
+
 				float3 lightDir = _WorldSpaceLightPos0.xyz;
 				float3 viewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
 				
